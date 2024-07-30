@@ -24,7 +24,7 @@ class EdgeProjector:
 
         with bpy.context.temp_override(area=areas[0]):
             view3d = bpy.context.space_data
-            view_matrix = cast(Matrix, view3d.region_3d.view_matrix)  # type: ignore
+            view_matrix = cast(Matrix, view3d.region_3d.view_matrix)   # type: ignore
             view_matrix = view_matrix.inverted()
 
             return view_matrix
@@ -49,9 +49,10 @@ class EdgeProjector:
 
     def execute(self):
         view_matrix = self.view_transform()
-
+        
         view_normal = Vector((0, 0, 1))
         view_normal.rotate(view_matrix)
+        # view_normal += view_matrix.translation
 
         me = ob.data if (ob := bpy.context.object) else None
 
@@ -73,13 +74,19 @@ class EdgeProjector:
             for vert in edge.verts
         ]
 
-        intersection, distance = mathutils.geometry.intersect_line_line(
+        intersection, _ = mathutils.geometry.intersect_line_line(
             verts[0], verts[1], verts[2], verts[3]
         )
 
+        new_vert = bm.verts.new(intersection)
+
         for i in range(2):
+
+            first = verts.pop(0)
+            second = verts.pop(0)
+
             point = self.calculate_percentage_of_edge(
-                verts[(i * 2) + 1] - verts[i], intersection - verts[i * 2], edges[i]
+                second-first, intersection - first, edges[i]
             )
 
             new_vert = bm.verts.new(point)
